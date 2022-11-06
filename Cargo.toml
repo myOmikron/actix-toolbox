@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/myOmikron/actix-toolbox"
 license = "MIT"
-authors = "myOmikron <git@omikron.dev>"
+authors = ["myOmikron <git@omikron.dev>"]
 
 [dependencies]
 
