@@ -8,8 +8,27 @@ authors = ["myOmikron <git@omikron.dev>"]
 description = "Toolbox for enhancing actix-web functionalities"
 
 [dependencies]
+# webframework
+actix-web = { version = "4.2" }
+
+# serialization
+serde = { version = "1.0" }
+byte-unit = { version = "4.0" }
+
+# logging
+log = { version = "0.4" }
+log4rs = { version = "1.2" }
+
+# orm
+rorm = { version = "0.2", optional = true }
+
+# uuid
+uuid = { version = "1.2" }
 
 [features]
 default = [
-
+    "byte-unit/serde",
+    "log4rs/gzip",
+    "serde/derive",
+    "uuid/v4",
 ]
