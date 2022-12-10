@@ -8,6 +8,8 @@ use async_trait::async_trait;
 use rand::distributions::{Alphanumeric, DistString};
 use rorm::{delete, insert, query, update, Model};
 
+pub use actix_session::SessionMiddleware;
+
 /**
 DB representation of a session.
 */
@@ -29,10 +31,20 @@ pub struct Session {
 /**
 Wrapper for a instance of [rorm::Database].
 */
-pub struct DBSession(rorm::Database);
+pub struct DBSessionStore(rorm::Database);
+
+impl DBSessionStore {
+    /// Create a new DBSessionStore
+    ///
+    /// **Parameter**:
+    /// - `db`: Instance of a connected database
+    pub fn new(db: rorm::Database) -> Self {
+        Self(db)
+    }
+}
 
 #[async_trait(?Send)]
-impl SessionStore for DBSession {
+impl SessionStore for DBSessionStore {
     async fn load(
         &self,
         session_key: &SessionKey,
