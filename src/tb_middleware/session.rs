@@ -21,7 +21,7 @@ pub struct Session {
     pub session_key: String,
 
     /// State of the session. json encoded HashMap<String, String>
-    #[rorm(max_length = 16777216)]
+    #[rorm(max_length = 1048576)]
     pub session_state: Option<String>,
 
     /// DateTime after the session will be invalid
