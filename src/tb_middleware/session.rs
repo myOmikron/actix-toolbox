@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use rand::distributions::{Alphanumeric, DistString};
 use rorm::{delete, insert, query, update, Model};
 
+pub use actix_session::config::PersistentSession;
 pub use actix_session::SessionMiddleware;
 
 /**
