@@ -9,13 +9,14 @@ use rand::distributions::{Alphanumeric, DistString};
 use rorm::{delete, insert, query, update, Model};
 
 pub use actix_session::config::PersistentSession;
+pub use actix_session::Session;
 pub use actix_session::SessionMiddleware;
 
 /**
 DB representation of a session.
 */
 #[derive(Model)]
-pub struct Session {
+pub struct DBSession {
     /// Key of the session
     #[rorm(primary_key)]
     #[rorm(max_length = 4096)]
@@ -52,8 +53,8 @@ impl SessionStore for DBSessionStore {
     ) -> Result<Option<HashMap<String, String>>, LoadError> {
         let now = chrono::Utc::now().naive_utc();
 
-        let session = query!(&self.0, Session)
-            .condition(Session::F.session_key.equals(session_key))
+        let session = query!(&self.0, DBSession)
+            .condition(DBSession::F.session_key.equals(session_key))
             .optional()
             .await
             .map_err(|e| LoadError::Other(anyhow!(e)))?;
@@ -84,8 +85,8 @@ impl SessionStore for DBSessionStore {
         loop {
             session_key = Alphanumeric.sample_string(&mut rand::thread_rng(), 512);
 
-            let res = query!(&self.0, (Session::F.session_key,))
-                .condition(Session::F.session_key.equals(&session_key))
+            let res = query!(&self.0, (DBSession::F.session_key,))
+                .condition(DBSession::F.session_key.equals(&session_key))
                 .optional()
                 .await
                 .map_err(|e| SaveError::Other(anyhow!(e)))?;
@@ -97,13 +98,13 @@ impl SessionStore for DBSessionStore {
             let state = serde_json::to_string(&session_state)
                 .map_err(|e| SaveError::Serialization(anyhow!(e)))?;
 
-            let s = Session {
+            let s = DBSession {
                 session_key: session_key.clone(),
                 session_state: Some(state),
                 expired_after,
             };
 
-            insert!(&self.0, Session)
+            insert!(&self.0, DBSession)
                 .single(&s)
                 .await
                 .map_err(|e| SaveError::Other(anyhow!(e)))?;
@@ -127,10 +128,10 @@ impl SessionStore for DBSessionStore {
         let state = serde_json::to_string(&session_state)
             .map_err(|e| UpdateError::Serialization(anyhow!(e)))?;
 
-        update!(&self.0, Session)
-            .condition(Session::F.session_key.equals(&session_key))
-            .set(Session::F.session_state, state.as_str())
-            .set(Session::F.expired_after, expired_after)
+        update!(&self.0, DBSession)
+            .condition(DBSession::F.session_key.equals(&session_key))
+            .set(DBSession::F.session_state, state.as_str())
+            .set(DBSession::F.expired_after, expired_after)
             .exec()
             .await
             .map_err(|e| UpdateError::Other(anyhow!(e)))?;
@@ -147,9 +148,9 @@ impl SessionStore for DBSessionStore {
             .naive_utc()
             .add(chrono::Duration::nanoseconds(ttl.whole_nanoseconds() as i64));
 
-        update!(&self.0, Session)
-            .condition(Session::F.session_key.equals(&session_key))
-            .set(Session::F.expired_after, expired_after)
+        update!(&self.0, DBSession)
+            .condition(DBSession::F.session_key.equals(&session_key))
+            .set(DBSession::F.expired_after, expired_after)
             .exec()
             .await
             .map_err(|e| anyhow!(e))?;
@@ -158,8 +159,8 @@ impl SessionStore for DBSessionStore {
     }
 
     async fn delete(&self, session_key: &SessionKey) -> Result<(), anyhow::Error> {
-        delete!(&self.0, Session)
-            .condition(Session::F.session_key.equals(&session_key))
+        delete!(&self.0, DBSession)
+            .condition(DBSession::F.session_key.equals(&session_key))
             .await
             .map_err(|e| anyhow!(e))?;
 
