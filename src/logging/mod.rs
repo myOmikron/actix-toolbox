@@ -176,5 +176,5 @@ pub fn setup_logging(config: &LoggingConfig) -> Result<Handle, String> {
                 .build(config.log_level),
         )
         .map_err(|e| e.to_string())?;
-    Ok(log4rs::init_config(logging_config).map_err(|e| e.to_string())?)
+    log4rs::init_config(logging_config).map_err(|e| e.to_string())
 }
