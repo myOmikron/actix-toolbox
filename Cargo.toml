@@ -16,13 +16,13 @@ actix-session = { version = "~0.7" }
 chrono = { version = "~0.4" }
 
 # serialization
-serde = { version = "~1.0" }
+serde = { version = "~1.0", features = ["derive"] }
 serde_json = { version = "~1.0" }
-byte-unit = { version = "~4.0" }
+byte-unit = { version = "~4.0", features = ["serde"] }
 
 # logging
 log = { version = "~0.4" }
-log4rs = { version = "~1.2" }
+log4rs = { version = "~1.2", features = ["gzip"] }
 
 # error handling. Required by actix-session
 anyhow = { version = "~1.0" }
@@ -36,12 +36,4 @@ rand = { version = "~0.8" }
 rorm = { version = "~0.4"}
 
 # uuid
-uuid = { version = "~1.2" }
-
-[features]
-default = [
-    "byte-unit/serde",
-    "log4rs/gzip",
-    "serde/derive",
-    "uuid/v4",
-]
+uuid = { version = "~1.2", features = ["v4"] }
