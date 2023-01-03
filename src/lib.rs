@@ -8,3 +8,7 @@
 pub mod logging;
 /// Provides a variety of different middlewares
 pub mod tb_middleware;
+
+/// Provides a sender-receiver based websocket interface
+#[cfg(feature = "ws")]
+pub mod ws;
