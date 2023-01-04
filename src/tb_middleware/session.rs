@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use rand::distributions::{Alphanumeric, DistString};
 use rorm::{delete, insert, query, update, Model};
 
+pub use actix_session;
 pub use actix_session::config::PersistentSession;
 pub use actix_session::Session;
 pub use actix_session::SessionMiddleware;
@@ -15,7 +16,7 @@ pub use actix_session::SessionMiddleware;
 /**
 DB representation of a session.
 */
-#[derive(Model)]
+#[derive(Model, Debug, Clone)]
 pub struct DBSession {
     /// Key of the session
     #[rorm(primary_key)]
@@ -33,6 +34,7 @@ pub struct DBSession {
 /**
 Wrapper for a instance of [rorm::Database].
 */
+#[derive(Clone)]
 pub struct DBSessionStore(rorm::Database);
 
 impl DBSessionStore {
