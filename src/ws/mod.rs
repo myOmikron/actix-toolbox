@@ -1,14 +1,19 @@
-use actix::{Actor, Addr, AsyncContext, Handler, MailboxError, Message, StreamHandler, WrapFuture};
+use actix::{
+    Actor, ActorContext, ActorFuture, Addr, AsyncContext, Handler, MailboxError, StreamHandler,
+};
 use actix_web::error::{Error, PayloadError};
 use actix_web::web::Bytes;
 use actix_web::{HttpRequest, HttpResponse};
-use actix_web_actors::ws;
+use actix_web_actors::ws::{WebsocketContext, WsResponseBuilder};
 use futures::Stream;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+use tokio::sync::mpsc;
 
-pub use actix_web_actors::ws::Message as WebSocketMessage;
+pub use actix_web_actors::ws::{Message, ProtocolError};
 
-/// Perform websocket handshake and produce a [sender](WebSocketSender) and [receiver](WebSocketReceiver) to communicate with the websocket.
+/// Perform websocket handshake and produce a [sender](Sender) and [receiver](Receiver) to communicate with the websocket.
 ///
 /// ```no_run
 /// use actix_web::{HttpRequest, HttpResponse};
@@ -25,35 +30,46 @@ pub use actix_web_actors::ws::Message as WebSocketMessage;
 ///     Ok(response)
 /// }
 /// ```
-pub fn start<S>(
-    request: &HttpRequest,
-    stream: S,
-) -> Result<(WebSocketSender, WebSocketReceiver, HttpResponse), Error>
+pub fn start<S>(request: &HttpRequest, stream: S) -> Result<(Sender, Receiver, HttpResponse), Error>
 where
     S: Stream<Item = Result<Bytes, PayloadError>> + 'static,
 {
-    let (sender, receiver) = channel(CHANNEL_BUFFER);
-    ws::WsResponseBuilder::new(WebSocketActor { channel: sender }, request, stream)
+    let (sender, receiver) = mpsc::channel(CHANNEL_BUFFER);
+    WsResponseBuilder::new(WebSocketActor { channel: sender }, request, stream)
         .start_with_addr()
-        .map(move |(addr, response)| {
-            (
-                WebSocketSender { addr },
-                WebSocketReceiver { channel: receiver },
-                response,
-            )
-        })
+        .map(move |(addr, response)| (Sender { addr }, Receiver { channel: receiver }, response))
 }
 
 /// Receiving part of a websocket
 ///
 /// Not cloneable
 #[derive(Debug)]
-pub struct WebSocketReceiver {
-    channel: Receiver<WebSocketMessage>,
+pub struct Receiver {
+    channel: mpsc::Receiver<Result<Message, ProtocolError>>,
 }
-impl WebSocketReceiver {
-    /// See [tokio](Receiver::recv)
-    pub async fn recv(&mut self) -> Option<WebSocketMessage> {
+impl Receiver {
+    /// Listen to websocket messages.
+    ///
+    /// - Returns `None` if the websocket was closed.
+    /// - Returns `Some(Err(...))` if an invalid websocket frame was received.
+    ///
+    /// Recommended usage:
+    /// ```no_run
+    /// # use actix_toolbox::ws;
+    /// # fn somewhere() -> ! {panic!();}
+    ///
+    /// // See ws::start for how to get this struct
+    /// let mut receiver: ws::Receiver = somewhere();
+    /// tokio::spawn(async move {
+    ///     while let Some(message) = receiver.recv().await {
+    ///         // Handle incoming message
+    ///     }
+    ///     // The websocket was closed
+    /// });
+    /// ```
+    ///
+    /// For more details see [tokio](mpsc::Receiver::recv).
+    pub async fn recv(&mut self) -> Option<Result<Message, ProtocolError>> {
         self.channel.recv().await
     }
 }
@@ -62,13 +78,22 @@ impl WebSocketReceiver {
 ///
 /// Cloneable
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
-pub struct WebSocketSender {
+pub struct Sender {
     addr: Addr<WebSocketActor>,
 }
-impl WebSocketSender {
-    /// See [actix](Addr::send)
-    pub async fn send(&self, msg: WebSocketMessage) -> Result<(), MailboxError> {
-        self.addr.send(WrappedMessage(msg)).await
+impl Sender {
+    /// Send a message over the websocket.
+    ///
+    /// - Returns `Err(...)` if the websocket was closed.
+    pub async fn send(&self, msg: Message) -> Result<(), MailboxError> {
+        self.addr.send(WrappedMessage::Send(msg)).await
+    }
+
+    /// Close the websocket
+    ///
+    /// - Returns `Err(...)` if the websocket was already closed.
+    pub async fn close(&self) -> Result<(), MailboxError> {
+        self.addr.send(WrappedMessage::Close).await
     }
 }
 
@@ -81,41 +106,67 @@ impl WebSocketSender {
 pub const CHANNEL_BUFFER: usize = 16;
 
 #[derive(Debug, Eq, PartialEq)]
-struct WrappedMessage(WebSocketMessage);
-
-impl WebSocketSender {}
+enum WrappedMessage {
+    Send(Message),
+    Close,
+}
+impl actix::Message for WrappedMessage {
+    type Result = ();
+}
 
 struct WebSocketActor {
-    channel: Sender<WebSocketMessage>,
+    channel: mpsc::Sender<Result<Message, ProtocolError>>,
 }
 
 impl Actor for WebSocketActor {
-    type Context = ws::WebsocketContext<Self>;
+    type Context = WebsocketContext<Self>;
 }
 
-impl Message for WrappedMessage {
-    type Result = ();
-}
 impl Handler<WrappedMessage> for WebSocketActor {
     type Result = ();
 
     fn handle(&mut self, msg: WrappedMessage, ctx: &mut Self::Context) -> Self::Result {
-        ctx.write_raw(msg.0);
+        match msg {
+            WrappedMessage::Send(msg) => ctx.write_raw(msg),
+            WrappedMessage::Close => ctx.stop(),
+        }
     }
 }
 
-impl StreamHandler<Result<WebSocketMessage, ws::ProtocolError>> for WebSocketActor {
-    fn handle(
-        &mut self,
-        item: Result<WebSocketMessage, ws::ProtocolError>,
-        ctx: &mut Self::Context,
-    ) {
-        match item {
-            Ok(msg) => {
-                let channel = self.channel.clone();
-                ctx.spawn(async move { channel.send(msg).await.expect("TODO") }.into_actor(&*self));
+impl StreamHandler<Result<Message, ProtocolError>> for WebSocketActor {
+    fn handle(&mut self, item: Result<Message, ProtocolError>, ctx: &mut Self::Context) {
+        let channel = self.channel.clone();
+        let future = async move { channel.send(item).await };
+        ctx.spawn(SendFuture {
+            future: Box::pin(future),
+        });
+    }
+}
+
+struct SendFuture {
+    future: Pin<
+        Box<
+            dyn Future<Output = Result<(), mpsc::error::SendError<Result<Message, ProtocolError>>>>,
+        >,
+    >,
+}
+impl ActorFuture<WebSocketActor> for SendFuture {
+    type Output = ();
+
+    fn poll(
+        mut self: Pin<&mut Self>,
+        _srv: &mut WebSocketActor,
+        ctx: &mut WebsocketContext<WebSocketActor>,
+        task: &mut Context<'_>,
+    ) -> Poll<Self::Output> {
+        match self.future.as_mut().poll(task) {
+            Poll::Ready(result) => {
+                if result.is_err() {
+                    ctx.stop();
+                }
+                Poll::Ready(())
             }
-            Err(_) => unimplemented!(),
+            Poll::Pending => Poll::Pending,
         }
     }
 }
