@@ -1,6 +1,6 @@
 [package]
 name = "actix-toolbox"
-version = "0.7.1"
+version = "0.7.2"
 edition = "2021"
 repository = "https://github.com/myOmikron/actix-toolbox"
 license = "MIT"
@@ -50,7 +50,7 @@ rorm = { version = "~0.4"}
 uuid = { version = "~1.2", features = ["v4"] }
 
 # channels
-tokio = { version = "~1.23", optional = true }
+tokio = { version = "~1.24", optional = true }
 
 # async util
 futures = { version = "~0.3", optional = true }
