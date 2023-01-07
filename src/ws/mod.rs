@@ -137,29 +137,29 @@ impl StreamHandler<Result<Message, ProtocolError>> for WebSocketActor {
     fn handle(&mut self, item: Result<Message, ProtocolError>, ctx: &mut Self::Context) {
         let channel = self.channel.clone();
         let future = async move { channel.send(item).await };
-        ctx.spawn(SendFuture {
-            future: Box::pin(future),
-        });
+        ctx.spawn(SendFuture { future });
     }
 }
 
-struct SendFuture {
-    future: Pin<
-        Box<
-            dyn Future<Output = Result<(), mpsc::error::SendError<Result<Message, ProtocolError>>>>,
-        >,
-    >,
+#[pin_project::pin_project]
+struct SendFuture<
+    F: Future<Output = Result<(), mpsc::error::SendError<Result<Message, ProtocolError>>>>,
+> {
+    #[pin]
+    future: F,
 }
-impl ActorFuture<WebSocketActor> for SendFuture {
+impl<F: Future<Output = Result<(), mpsc::error::SendError<Result<Message, ProtocolError>>>>>
+    ActorFuture<WebSocketActor> for SendFuture<F>
+{
     type Output = ();
 
     fn poll(
-        mut self: Pin<&mut Self>,
+        self: Pin<&mut Self>,
         _srv: &mut WebSocketActor,
         ctx: &mut WebsocketContext<WebSocketActor>,
         task: &mut Context<'_>,
     ) -> Poll<Self::Output> {
-        match self.future.as_mut().poll(task) {
+        match self.project().future.poll(task) {
             Poll::Ready(result) => {
                 if result.is_err() {
                     ctx.stop();
