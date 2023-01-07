@@ -68,6 +68,7 @@ ws = [
     "actix-web-actors",
     "futures",
     "tokio",
+    "pin-project",
 ]
 
 logging = [
