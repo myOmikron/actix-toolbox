@@ -5,6 +5,7 @@
 #![warn(missing_docs)]
 
 /// Provides logging functionality e.g. sets up a configured logger
+#[cfg(feature = "logging")]
 pub mod logging;
 /// Provides a variety of different middlewares
 pub mod tb_middleware;
