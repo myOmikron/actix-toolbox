@@ -1,17 +1,16 @@
-use actix::{
-    Actor, ActorContext, ActorFuture, Addr, AsyncContext, Handler, MailboxError, StreamHandler,
-};
-use actix_web::error::{Error, PayloadError};
-use actix_web::web::Bytes;
-use actix_web::{HttpRequest, HttpResponse};
-use actix_web_actors::ws::{WebsocketContext, WsResponseBuilder};
-use futures::Stream;
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use tokio::sync::mpsc;
 
+pub use actix::MailboxError;
+use actix::{Actor, ActorContext, ActorFuture, Addr, AsyncContext, Handler, StreamHandler};
+use actix_web::error::{Error, PayloadError};
+use actix_web::web::Bytes;
+use actix_web::{HttpRequest, HttpResponse};
 pub use actix_web_actors::ws::{Message, ProtocolError};
+use actix_web_actors::ws::{WebsocketContext, WsResponseBuilder};
+use futures::Stream;
+use tokio::sync::mpsc;
 
 /// Perform websocket handshake and produce a [sender](Sender) and [receiver](Receiver) to communicate with the websocket.
 ///

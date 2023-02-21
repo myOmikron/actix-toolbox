@@ -1,17 +1,15 @@
 use std::collections::HashMap;
 use std::ops::Add;
 
+pub use actix_session;
+pub use actix_session::config::PersistentSession;
 use actix_session::storage::{LoadError, SaveError, SessionKey, SessionStore, UpdateError};
+pub use actix_session::{Session, SessionMiddleware};
 use actix_web::cookie::time::Duration;
 use anyhow::anyhow;
 use async_trait::async_trait;
 use rand::distributions::{Alphanumeric, DistString};
 use rorm::{delete, insert, query, update, Model};
-
-pub use actix_session;
-pub use actix_session::config::PersistentSession;
-pub use actix_session::Session;
-pub use actix_session::SessionMiddleware;
 
 /**
 DB representation of a session.
