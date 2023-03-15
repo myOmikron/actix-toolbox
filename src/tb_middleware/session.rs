@@ -54,7 +54,7 @@ impl SessionStore for DBSessionStore {
         let now = chrono::Utc::now().naive_utc();
 
         let session = query!(&self.0, DBSession)
-            .condition(DBSession::F.session_key.equals(session_key))
+            .condition(DBSession::F.session_key.equals(session_key.as_ref()))
             .optional()
             .await
             .map_err(|e| LoadError::Other(anyhow!(e)))?;
@@ -129,7 +129,7 @@ impl SessionStore for DBSessionStore {
             .map_err(|e| UpdateError::Serialization(anyhow!(e)))?;
 
         update!(&self.0, DBSession)
-            .condition(DBSession::F.session_key.equals(&session_key))
+            .condition(DBSession::F.session_key.equals(session_key.as_ref()))
             .set(DBSession::F.session_state, state.as_str())
             .set(DBSession::F.expired_after, expired_after)
             .exec()
@@ -149,7 +149,7 @@ impl SessionStore for DBSessionStore {
             .add(chrono::Duration::nanoseconds(ttl.whole_nanoseconds() as i64));
 
         update!(&self.0, DBSession)
-            .condition(DBSession::F.session_key.equals(&session_key))
+            .condition(DBSession::F.session_key.equals(session_key.as_ref()))
             .set(DBSession::F.expired_after, expired_after)
             .exec()
             .await
@@ -160,7 +160,7 @@ impl SessionStore for DBSessionStore {
 
     async fn delete(&self, session_key: &SessionKey) -> Result<(), anyhow::Error> {
         delete!(&self.0, DBSession)
-            .condition(DBSession::F.session_key.equals(&session_key))
+            .condition(DBSession::F.session_key.equals(session_key.as_ref()))
             .await
             .map_err(|e| anyhow!(e))?;
 
