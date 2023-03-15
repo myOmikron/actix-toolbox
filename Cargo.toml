@@ -1,6 +1,6 @@
 [package]
 name = "actix-toolbox"
-version = "0.10.0"
+version = "0.10.1"
 edition = "2021"
 repository = "https://github.com/myOmikron/actix-toolbox"
 license = "MIT"
@@ -29,7 +29,7 @@ chrono = { version = ">=0.4.20", optional = true }
 # serialization
 serde = { version = "~1", features = ["derive"], optional = true }
 serde_json = { version = "~1", optional = true }
-byte-unit = { version = "~4", optional = true }
+byte-unit = { version = "~4", features = ["serde"], optional = true }
 
 # logging
 log = { version = "~0.4" }
