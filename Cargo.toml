@@ -24,7 +24,7 @@ actix-session = { version = "~0.7", optional = true }
 actix-web-actors = { version = "~4", optional = true }
 
 # time library
-chrono = { version = ">=0.4.20", optional = true }
+chrono = { version = ">=0.4.20", default-features = false, optional = true }
 
 # serialization
 serde = { version = "~1", features = ["derive"], optional = true }
