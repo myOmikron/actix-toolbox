@@ -1,6 +1,6 @@
 [package]
 name = "actix-toolbox"
-version = "0.10.1"
+version = "0.10.2"
 edition = "2021"
 repository = "https://github.com/myOmikron/actix-toolbox"
 license = "MIT"
