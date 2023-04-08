@@ -13,3 +13,7 @@ pub mod tb_middleware;
 /// Provides a sender-receiver based websocket interface
 #[cfg(feature = "ws")]
 pub mod ws;
+
+/// Provides two handlers for the Open ID Connect protocol
+#[cfg(feature = "oidc")]
+pub mod oidc;

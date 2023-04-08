@@ -23,6 +23,9 @@ actix-web = { version = "~4", optional = true }
 actix-session = { version = "~0.7", optional = true }
 actix-web-actors = { version = "~4", optional = true }
 
+# Open ID Connect
+openidconnect = { version = "~2.5", optional = true }
+
 # time library
 chrono = { version = ">=0.4.20", default-features = false, optional = true }
 
@@ -59,7 +62,7 @@ futures = { version = "~0.3", optional = true }
 pin-project = { version = "~1", optional = true }
 
 [package.metadata.docs.rs]
-features = ["ws", "logging", "session"]
+features = ["ws", "logging", "session", "oidc"]
 
 [features]
 ws = [
@@ -91,4 +94,8 @@ session = [
     "rorm",
     "serde",
     "serde_json",
+]
+
+oidc = [
+    "openidconnect"
 ]
