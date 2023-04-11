@@ -97,5 +97,8 @@ session = [
 ]
 
 oidc = [
-    "openidconnect"
+    "openidconnect",
+    "serde",
+    "actix-web",
+    "actix-session",
 ]
