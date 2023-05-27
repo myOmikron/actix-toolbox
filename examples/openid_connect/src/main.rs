@@ -33,9 +33,12 @@ async fn main() -> std::io::Result<()> {
     // You probably want to deserialize this struct from a config file
     let config = Config {
         // The url, the `finish_login` handler is exposed under (see below)
-        finish_login_url: RedirectUrl::new("/finish_login".into()).expect("Invalid url"),
+        // as visible by outsiders i.e. the openid connect provider will redirect the user to this url.
+        finish_login_url: RedirectUrl::new("http:://localhost:8080/finish_login".into())
+            .expect("Invalid url"),
 
         // Any url to redirect to once the whole openid connect workflow has finished
+        // Since our server will redirect here, the path can omit the host information
         post_auth_url: "/".to_string(),
 
         // Don't forget to fill in your openid connect provider's details !!!
