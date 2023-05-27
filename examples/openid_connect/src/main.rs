@@ -34,7 +34,7 @@ async fn main() -> std::io::Result<()> {
     let config = Config {
         // The url, the `finish_login` handler is exposed under (see below)
         // as visible by outsiders i.e. the openid connect provider will redirect the user to this url.
-        finish_login_url: RedirectUrl::new("http:://localhost:8080/finish_login".into())
+        finish_login_url: RedirectUrl::new("http://localhost:8080/finish_login".into())
             .expect("Invalid url"),
 
         // Any url to redirect to once the whole openid connect workflow has finished
