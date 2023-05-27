@@ -1,0 +1,19 @@
+[package]
+name = "openid_connect"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "~4"
+actix-session = "~0.7"
+actix-toolbox = { version = "~0.11", features = ["oidc"] }
+env_logger = "~0.10"
+
+# Required to implement in-memory session storage
+async-trait = "~0.1"
+rand = "~0.8"
+chrono = "~0.4"
+once_cell = "~1"
+anyhow = "~1"
