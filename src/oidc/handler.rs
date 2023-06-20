@@ -1,7 +1,7 @@
 use actix_session::{Session, SessionInsertError};
 use actix_web::http::header;
-use actix_web::web::{Data, Query};
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::web::{Data, Query, Redirect};
+use actix_web::{HttpResponse, Responder, ResponseError};
 use openidconnect::core::{CoreAuthenticationFlow, CoreRequestTokenError};
 use openidconnect::reqwest::{async_http_client, HttpClientError};
 use openidconnect::{
@@ -13,10 +13,7 @@ use serde::{Deserialize, Serialize};
 use crate::oidc::{Client, UserData};
 
 /// Handler for OIDC's login endpoint
-pub async fn login(
-    client: Data<Client>,
-    session: Session,
-) -> Result<HttpResponse, SessionInsertError> {
+pub async fn login(client: Data<Client>, session: Session) -> Result<Redirect, SessionInsertError> {
     // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
     let (pkce_code_challenge, pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
 
@@ -43,9 +40,7 @@ pub async fn login(
         },
     )?;
 
-    Ok(HttpResponse::Found()
-        .append_header((header::LOCATION, auth_url.to_string()))
-        .finish())
+    Ok(Redirect::to(auth_url.to_string()).temporary())
 }
 
 #[derive(Serialize, Deserialize)]
