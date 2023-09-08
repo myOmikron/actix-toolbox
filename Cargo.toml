@@ -1,6 +1,6 @@
 [package]
 name = "actix-toolbox"
-version = "0.12.1"
+version = "0.13.0"
 edition = "2021"
 repository = "https://github.com/myOmikron/actix-toolbox"
 license = "MIT"
@@ -84,14 +84,25 @@ logging = [
     "uuid",
 ]
 
-session = [
+session-all-drivers = [
+    "rorm/all-drivers",
+    "__session",
+]
+
+session-postgres-only = [
+    "rorm/postgres-only",
+    "__session",
+]
+
+__session = [
+    "rorm",
+    "rorm/chrono",
     "actix-session",
     "actix-web",
     "anyhow",
     "async-trait",
     "chrono",
     "rand",
-    "rorm",
     "serde",
     "serde_json",
 ]
