@@ -1,6 +1,6 @@
 [package]
 name = "actix-toolbox"
-version = "0.12.0"
+version = "0.12.1"
 edition = "2021"
 repository = "https://github.com/myOmikron/actix-toolbox"
 license = "MIT"
@@ -47,7 +47,7 @@ async-trait = { version = "~0.1", optional = true }
 rand = { version = "~0.8", optional = true }
 
 # orm
-rorm = { version = "~0.6", optional = true }
+rorm = { version = "~0.6", default-features = false, optional = true }
 
 # uuid
 uuid = { version = "~1", features = ["v4"], optional = true }
