@@ -182,12 +182,12 @@ impl std::error::Error for FinishLoginError {
         match self {
             FinishLoginError::MissingState => None,
             FinishLoginError::InvalidState => None,
-            FinishLoginError::FailedRequestToken(err) => Some(&*err),
-            FinishLoginError::SessionInsert(err) => Some(&*err),
+            FinishLoginError::FailedRequestToken(err) => Some(err),
+            FinishLoginError::SessionInsert(err) => Some(err),
             FinishLoginError::MissingIdToken => None,
-            FinishLoginError::CreateAccessTokenHash(err) => Some(&*err),
+            FinishLoginError::CreateAccessTokenHash(err) => Some(err),
             FinishLoginError::InvalidAccessTokenHash => None,
-            FinishLoginError::InvalidIdToken(err) => Some(&*err),
+            FinishLoginError::InvalidIdToken(err) => Some(err),
         }
     }
 }

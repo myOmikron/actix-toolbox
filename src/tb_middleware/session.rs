@@ -8,8 +8,9 @@ pub use actix_session::{Session, SessionMiddleware};
 use actix_web::cookie::time::Duration;
 use anyhow::anyhow;
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use rand::distributions::{Alphanumeric, DistString};
-use rorm::{delete, insert, query, update, Model};
+use rorm::{delete, insert, query, update, FieldAccess, Model};
 
 /**
 DB representation of a session.
@@ -22,11 +23,11 @@ pub struct DBSession {
     pub session_key: String,
 
     /// State of the session. json encoded HashMap<String, String>
-    #[rorm(max_length = 1048576)]
+    #[rorm(max_length = 16383)]
     pub session_state: Option<String>,
 
     /// DateTime after the session will be invalid
-    pub expired_after: chrono::NaiveDateTime,
+    pub expired_after: DateTime<Utc>,
 }
 
 /**
@@ -51,7 +52,7 @@ impl SessionStore for DBSessionStore {
         &self,
         session_key: &SessionKey,
     ) -> Result<Option<HashMap<String, String>>, LoadError> {
-        let now = chrono::Utc::now().naive_utc();
+        let now = Utc::now();
 
         let session = query!(&self.0, DBSession)
             .condition(DBSession::F.session_key.equals(session_key.as_ref()))
@@ -77,9 +78,8 @@ impl SessionStore for DBSessionStore {
         session_state: HashMap<String, String>,
         ttl: &Duration,
     ) -> Result<SessionKey, SaveError> {
-        let expired_after = chrono::Utc::now()
-            .naive_utc()
-            .add(chrono::Duration::nanoseconds(ttl.whole_nanoseconds() as i64));
+        let expired_after =
+            Utc::now().add(chrono::Duration::nanoseconds(ttl.whole_nanoseconds() as i64));
 
         let mut session_key;
         loop {
@@ -121,16 +121,15 @@ impl SessionStore for DBSessionStore {
         session_state: HashMap<String, String>,
         ttl: &Duration,
     ) -> Result<SessionKey, UpdateError> {
-        let expired_after = chrono::Utc::now()
-            .naive_utc()
-            .add(chrono::Duration::nanoseconds(ttl.whole_nanoseconds() as i64));
+        let expired_after =
+            Utc::now().add(chrono::Duration::nanoseconds(ttl.whole_nanoseconds() as i64));
 
         let state = serde_json::to_string(&session_state)
             .map_err(|e| UpdateError::Serialization(anyhow!(e)))?;
 
         update!(&self.0, DBSession)
             .condition(DBSession::F.session_key.equals(session_key.as_ref()))
-            .set(DBSession::F.session_state, state.as_str())
+            .set(DBSession::F.session_state, Some(state))
             .set(DBSession::F.expired_after, expired_after)
             .exec()
             .await
@@ -144,9 +143,8 @@ impl SessionStore for DBSessionStore {
         session_key: &SessionKey,
         ttl: &Duration,
     ) -> Result<(), anyhow::Error> {
-        let expired_after = chrono::Utc::now()
-            .naive_utc()
-            .add(chrono::Duration::nanoseconds(ttl.whole_nanoseconds() as i64));
+        let expired_after =
+            Utc::now().add(chrono::Duration::nanoseconds(ttl.whole_nanoseconds() as i64));
 
         update!(&self.0, DBSession)
             .condition(DBSession::F.session_key.equals(session_key.as_ref()))
