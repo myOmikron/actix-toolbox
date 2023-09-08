@@ -1,7 +1,7 @@
 use actix_session::{Session, SessionInsertError};
 use actix_web::http::header;
 use actix_web::web::{Data, Query, Redirect};
-use actix_web::{HttpResponse, Responder, ResponseError};
+use actix_web::{HttpResponse, ResponseError};
 use openidconnect::core::{CoreAuthenticationFlow, CoreRequestTokenError};
 use openidconnect::reqwest::{async_http_client, HttpClientError};
 use openidconnect::{
