@@ -47,7 +47,7 @@ async-trait = { version = "~0.1", optional = true }
 rand = { version = "~0.8", optional = true }
 
 # orm
-rorm = { version = "~0.6", default-features = false, optional = true }
+rorm = { version = "~0.6", default-features = false, optional = true, git = "https://github.com/rorm-orm/rorm.git", branch = "dev" }
 
 # uuid
 uuid = { version = "~1", features = ["v4"], optional = true }
